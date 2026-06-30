@@ -337,11 +337,6 @@ class PlumbingCalcWindow(forms.WPFWindow):
         self.lbl_DesignLoad.Text = "Total Design Load: {}".format(self.gtTotalLoad)
         
         self.RoomDataGrid.Items.Refresh()
-        
-        # Apply exactly formatted string
-        self.MathBreakdownText.Text = "\n".join(math_strings)
-        
-        self.RoomDataGrid.Items.Refresh()
 
     def LevelFilter_SelectionChanged(self, sender, e):
         self.update_math(refresh_items=True)
