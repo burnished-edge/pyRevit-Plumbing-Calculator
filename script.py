@@ -37,28 +37,40 @@ def auto_bind_plumbing_parameters():
 # ==========================================
 # 2. FRACTIONAL MATH & STRING FORMATTING ENGINE
 # ==========================================
-def run_frac_math(val, limits, counts, over_divisor):
-    if val <= 0: return (0.0, "0.00")
+def run_frac_math(prefix, val, limits, counts, over_divisor):
+    if val <= 0: return (0.0, "{}: 0 occupants".format(prefix))
     
     base_val = 0
-    base_count = 0.0
+    base_count = 0
     for limit, count in zip(limits, counts):
         if val <= limit:
             added_counts = count - base_count
             range_span = limit - base_val
-            calc = base_count + (val - base_val) * (added_counts / float(range_span))
-            return (calc, "{} + ({}/{} of {}) = {:.2f}".format(base_count, added_counts, range_span, val - base_val, calc))
+            rem_occ = val - base_val
+            calc = base_count + rem_occ * (added_counts / float(range_span))
+            
+            if base_count == 0:
+                str_out = "{}: {} occupants * {}/{} = {:.2f}".format(prefix, val, added_counts, range_span, calc)
+            else:
+                str_out = "{}: {} occupants = {} fixture(s) with {} - {} = {} Remaining occupants, {} * {}/{} = {:.2f}, Total = {:.2f}".format(
+                    prefix, base_val, base_count, val, base_val, rem_occ, rem_occ, added_counts, range_span, calc - base_count, calc)
+            return (calc, str_out)
         base_val = limit
         base_count = count
         
-    over = val - base_val
-    calc = base_count + over / float(over_divisor)
-    return (calc, "{} + ({}/{}) = {:.2f}".format(base_count, over, over_divisor, calc))
+    rem_occ = val - base_val
+    calc = base_count + rem_occ / float(over_divisor)
+    if base_count == 0:
+        str_out = "{}: {} occupants * 1/{} = {:.2f}".format(prefix, val, over_divisor, calc)
+    else:
+        str_out = "{}: {} occupants = {} fixture(s) with {} - {} = {} Remaining occupants, {} * 1/{} = {:.2f}, Total = {:.2f}".format(
+            prefix, base_val, base_count, val, base_val, rem_occ, rem_occ, over_divisor, calc - base_count, calc)
+    return (calc, str_out)
 
-def run_linear_math(val, divisor):
-    if val <= 0: return (0.0, "0.00")
+def run_linear_math(prefix, val, divisor):
+    if val <= 0: return (0.0, "{}: 0 occupants".format(prefix))
     calc = val / float(divisor)
-    return (calc, "{}/{} = {:.2f}".format(val, divisor, calc))
+    return (calc, "{}: {} occupants * 1/{} = {:.2f}".format(prefix, val, divisor, calc))
 
 OCC_MAP = {
     'A-1': {'calc': 'seats', 'mWC': ([100,200,400], [1,2,3], 500), 'fWC': ([25,50,100,200,300,400], [1,2,3,4,6,8], 125), 'mUr': ([200,300,400,600], [1,2,3,4], 300), 'mLav': ([200,400,600,750], [1,2,3,4], 250), 'fLav': ([100,200,300,500,750], [1,2,4,5,6], 200), 'df': ([250,500,750], [1,2,3], 500)},
