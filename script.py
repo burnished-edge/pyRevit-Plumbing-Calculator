@@ -3,6 +3,7 @@ import math
 import clr
 import System
 clr.AddReference('PresentationFramework')
+clr.AddReference('WindowsBase') # <--- THIS IS THE MISSING PIECE
 from System.ComponentModel import SortDescription, ListSortDirection
 from pyrevit import revit, DB, forms, script
 
