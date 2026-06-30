@@ -40,10 +40,11 @@ def auto_bind_plumbing_parameters():
 GROUP_NAMES = {
     'A-1': 'Group A-1 Assembly', 'A-2': 'Group A-2 Assembly', 'A-3': 'Group A-3 Assembly',
     'A-4': 'Group A-4 Assembly', 'A-5': 'Group A-5 Assembly', 'B': 'Group B Business',
-    'E': 'Group E Educational', 'M': 'Group M Mercantile', 'I-1': 'Group I-1 Institutional',
-    'I-2-Rooms': 'Group I-2 Institutional', 'I-2-Waiting': 'Group I-2 Institutional',
-    'I-3-Cells': 'Group I-3 Institutional', 'I-3-Employee': 'Group I-3 Institutional',
-    'I-4': 'Group I-4 Institutional', 'R-1': 'Group R-1 Residential',
+    'E': 'Group E Educational', 'F': 'Group F Factory/Industrial', 
+    'I-1': 'Group I-1 Institutional', 'I-2-Rooms': 'Group I-2 Institutional', 
+    'I-2-Waiting': 'Group I-2 Institutional', 'I-3-Cells': 'Group I-3 Institutional', 
+    'I-3-Employee': 'Group I-3 Institutional', 'I-4': 'Group I-4 Institutional', 
+    'M': 'Group M Mercantile', 'R-1': 'Group R-1 Residential',
     'R-2-Dorm': 'Group R-2 Residential', 'R-2-Apt': 'Group R-2 Residential',
     'R-2-Employee': 'Group R-2 Residential', 'R-3-Group': 'Group R-3 Residential',
     'R-3-Dwelling': 'Group R-3 Residential', 'R-4': 'Group R-4 Residential', 'S': 'Group S Storage'
@@ -96,12 +97,20 @@ OCC_MAP = {
     'B': {'calc': 'area', 'fac': 150, 'mWC': ([50,100,200,400], [1,2,3,4], 500), 'fWC': ([15,30,50,100,200,400], [1,2,3,4,8,11], 150), 'mUr': ([100,200,400,600], [1,2,3,4], 300), 'mLav': ([75,150,200,300,400], [1,2,3,4,5], 250), 'fLav': ([50,100,150,200,300,400], [1,2,3,4,5,6], 200), 'df': 150},
     'B-Seats': {'calc': 'seats', 'mWC': ([50,100,200,400], [1,2,3,4], 500), 'fWC': ([15,30,50,100,200,400], [1,2,3,4,8,11], 150), 'mUr': ([100,200,400,600], [1,2,3,4], 300), 'mLav': ([75,150,200,300,400], [1,2,3,4,5], 250), 'fLav': ([50,100,150,200,300,400], [1,2,3,4,5,6], 200), 'df': 150},
     'E': {'calc': 'area', 'fac': 50, 'mWC': 50, 'fWC': 30, 'mUr': 100, 'mLav': 40, 'fLav': 40, 'df': 150},
-    'M': {'calc': 'area', 'fac': 100, 'mWC': ([100,200,400], [1,2,3], 500), 'fWC': ([100,200,300,400], [1,2,4,6], 200), 'mUr': ([200,400], [0,1], 500), 'mLav': ([200,400], [1,2], 500), 'fLav': ([200,300,400], [1,2,3], 400), 'df': ([250,500,750], [1,2,3], 500)},
+    'F': {'calc': 'area', 'fac': 500, 'mWC': ([50,75,100], [1,2,3], 40), 'fWC': ([50,75,100], [1,2,3], 40), 'mUr': None, 'mLav': ([50,75,100], [1,2,3], 40), 'fLav': ([50,75,100], [1,2,3], 40), 'df': ([250,500,750], [1,2,3], 500)},
+    'I-1': {'calc': 'area', 'fac': 200, 'mWC': 15, 'fWC': 15, 'mUr': None, 'mLav': 15, 'fLav': 15, 'df': 150},
     'I-2-Rooms': { 'calc': 'units' },
+    'I-2-Waiting': {'calc': 'area', 'fac': 15, 'mWC': 15, 'fWC': 15, 'mUr': None, 'mLav': 15, 'fLav': 15, 'df': 150},
     'I-3-Cells': { 'calc': 'units' },
+    'I-3-Employee': {'calc': 'area', 'fac': 100, 'mWC': ([15,35,55], [1,2,3], 40), 'fWC': ([15,35,55], [1,2,3], 40), 'mUr': None, 'mLav': ([15,35,55], [1,2,3], 40), 'fLav': ([15,35,55], [1,2,3], 40), 'df': 150},
+    'I-4': {'calc': 'area', 'fac': 35, 'mWC': 40, 'fWC': 40, 'mUr': None, 'mLav': 40, 'fLav': 40, 'df': 150},
+    'M': {'calc': 'area', 'fac': 100, 'mWC': ([100,200,400], [1,2,3], 500), 'fWC': ([100,200,300,400], [1,2,4,6], 200), 'mUr': ([200,400], [0,1], 500), 'mLav': ([200,400], [1,2], 500), 'fLav': ([200,300,400], [1,2,3], 400), 'df': ([250,500,750], [1,2,3], 500)},
     'R-1': { 'calc': 'units' },
+    'R-2-Dorm': {'calc': 'area', 'fac': 50, 'mWC': 10, 'fWC': 8, 'mUr': 25, 'mLav': 12, 'fLav': 12, 'df': 150},
     'R-2-Apt': { 'calc': 'units' },
-    'R-3-Dwelling': { 'calc': 'units' }
+    'R-2-Employee': {'calc': 'area', 'fac': 150, 'mWC': ([15,35,55], [1,2,3], 40), 'fWC': ([15,35,55], [1,2,3], 40), 'mUr': None, 'mLav': 40, 'fLav': 40, 'df': 150},
+    'R-3-Group': {'calc': 'area', 'fac': 200, 'mWC': 10, 'fWC': 8, 'mUr': None, 'mLav': 12, 'fLav': 12, 'df': 150},
+    'R-3-Dwelling': { 'calc': 'units' },
     'R-4': {'calc': 'area', 'fac': 200, 'mWC': 10, 'fWC': 8, 'mUr': None, 'mLav': 12, 'fLav': 12, 'df': 150},
     'S': {'calc': 'area', 'fac': 4000, 'mWC': ([100,200,400], [1,2,3], 500), 'fWC': ([100,200,400], [1,2,3], 150), 'mUr': None, 'mLav': ([200,400,750], [1,2,3], 500), 'fLav': ([200,400,750], [1,2,3], 500), 'df': ([250,500,750], [1,2,3], 500)}
 }
