@@ -193,7 +193,8 @@ class PlumbingCalcWindow(forms.WPFWindow):
             lvl = room.Level.Name if room.Level else "Unknown"
             self.levels.add(lvl)
             
-            phase_name = room.Phase.Name if room.Phase else "Unknown"
+            phase_param = room.get_Parameter(DB.BuiltInParameter.ROOM_PHASE)
+            phase_name = phase_param.AsValueString() if (phase_param and phase_param.AsValueString()) else "Unknown"
             
             if area_param and area_param.AsDouble() > 0:
                 area_sf = area_param.AsDouble()
