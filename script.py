@@ -251,35 +251,51 @@ class PlumbingCalcWindow(forms.WPFWindow):
             elif base_occ == "B-Seats": base_occ = "B"
             
             if base_occ not in occ_groups:
-                occ_groups[base_occ] = {'total': 0.0, 'm': 0, 'f': 0, 'logic': logic}
+                occ_groups[base_occ] = {'loads': [], 'logic': logic}
                 
-            occ_groups[base_occ]['total'] += totalOcc
+            occ_groups[base_occ]['loads'].append(totalOcc)
 
         math_strings = []
-        for o_type, pops in occ_groups.items():
-            logic = pops['logic']
+        for o_type, data in occ_groups.items():
+            logic = data['logic']
+            loads = data['loads']
             
-            t_pop = int(math.ceil(pops['total']))
+            total_unrounded = sum(loads)
+            t_pop = int(math.ceil(total_unrounded))
             m_pop = int(math.ceil(t_pop / 2.0))
             f_pop = int(math.ceil(t_pop / 2.0))
             
             gtMale += m_pop
             gtFemale += f_pop
             
-            header = "\n[ {} ] Base Aggregated Load: {} ({}M / {}F)\n".format(o_type, t_pop, m_pop, f_pop)
+            if len(loads) > 1:
+                load_str = "({}) = ".format(" + ".join(["{:.2f}".format(L).rstrip('0').rstrip('.') for L in loads]))
+            else:
+                load_str = ""
+                
+            header = "Group {}\nAggregated Base Load: {}{} Occupants -> 50/50 Split rounds up to {} Male & {} Female".format(o_type, load_str, t_pop, m_pop, f_pop)
             lines = [header]
             
             if logic['calc'] != 'units':
-                for f_key, pop_target in [('mWC', m_pop), ('fWC', f_pop), ('mUr', m_pop), ('mLav', m_pop), ('fLav', f_pop), ('df', t_pop)]:
+                f_map = [
+                    ('mWC', "WC (M)", m_pop), 
+                    ('fWC', "WC (F)", f_pop), 
+                    ('mUr', "Urinals", m_pop), 
+                    ('mLav', "Lavatory (M)", m_pop), 
+                    ('fLav', "Lavatory (F)", f_pop), 
+                    ('df', "Drinking Fountains", t_pop)
+                ]
+                
+                for f_key, f_prefix, pop_target in f_map:
                     map_val = logic[f_key]
                     if type(map_val) is tuple:
-                        calc, str_out = run_frac_math(pop_target, map_val[0], map_val[1], map_val[2])
+                        calc, str_out = run_frac_math(f_prefix, pop_target, map_val[0], map_val[1], map_val[2])
                     elif type(map_val) is int:
-                        calc, str_out = run_linear_math(pop_target, map_val)
+                        calc, str_out = run_linear_math(f_prefix, pop_target, map_val)
                     else:
-                        calc, str_out = (0.0, "0.00")
+                        calc, str_out = (0.0, "{}: 0 occupants".format(f_prefix))
                     
-                    lines.append("  {:5} : {}".format(f_key, str_out))
+                    lines.append(str_out)
                     
                     if f_key == 'mWC': self.gt_mWC += calc
                     if f_key == 'fWC': self.gt_fWC += calc
@@ -301,7 +317,9 @@ class PlumbingCalcWindow(forms.WPFWindow):
         self.lbl_AgLav.Text = "Lavatories: {}".format(int(math.ceil(self.gt_mLav + self.gt_fLav)))
         self.lbl_DF.Text = "Drinking Fountains: {}".format(int(math.ceil(self.gt_df)))
         self.lbl_DesignLoad.Text = "Total Design Load: {}".format(self.gtTotalLoad)
-        self.MathBreakdownText.Text = "Aggregate M-WC: {:.2f} | Aggregate F-WC: {:.2f}\n".format(self.gt_mWC, self.gt_fWC) + "".join(math_strings)
+        
+        # Apply exactly formatted string
+        self.MathBreakdownText.Text = "\n".join(math_strings)
         
         self.RoomDataGrid.Items.Refresh()
 
