@@ -4,6 +4,7 @@ import clr
 import System
 clr.AddReference('PresentationFramework')
 from pyrevit import revit, DB, forms, script
+from System.ComponentModel import SortDescription, ListSortDirection
 
 doc = revit.doc
 app = doc.Application
@@ -144,7 +145,7 @@ class PlumbingCalcWindow(forms.WPFWindow):
         self.BulkOccType.ItemsSource = sorted(OCC_MAP.keys())
         
         self.load_rooms()
-        self.update_math()
+        self.update_math(refresh_items=True)
 
     def load_rooms(self):
         rooms = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Rooms).WhereElementIsNotElementType().ToElements()
@@ -190,11 +191,24 @@ class PlumbingCalcWindow(forms.WPFWindow):
             return val if val > 0 else default_val
         except (ValueError, TypeError): return default_val
 
-    def update_math(self):
-        selected_level = self.LevelFilter.SelectedItem
-        filtered_rooms = [r for r in self.all_rooms if selected_level == "All Levels" or r.Level == selected_level]
-        self.RoomDataGrid.ItemsSource = filtered_rooms
-        
+def update_math(self, refresh_items=False):
+        # 1. Handle Filtering and Persistent Sorting
+        if refresh_items:
+            selected_level = self.LevelFilter.SelectedItem
+            filtered_rooms = [r for r in self.all_rooms if selected_level == "All Levels" or r.Level == selected_level]
+            
+            current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
+            self.RoomDataGrid.ItemsSource = filtered_rooms
+            
+            # Default to sorting by Room Number, otherwise keep user's active sort
+            if not current_sorts:
+                self.RoomDataGrid.Items.SortDescriptions.Add(SortDescription("Number", ListSortDirection.Ascending))
+            else:
+                for sd in current_sorts:
+                    self.RoomDataGrid.Items.SortDescriptions.Add(sd)
+        else:
+            filtered_rooms = self.RoomDataGrid.ItemsSource
+            
         self.gtTotalLoad = gtMale = gtFemale = 0
         self.gt_mWC = self.gt_fWC = self.gt_mUr = self.gt_mLav = self.gt_fLav = self.gt_df = 0.0
         
@@ -210,7 +224,6 @@ class PlumbingCalcWindow(forms.WPFWindow):
             
             totalOcc = 0.0
             
-            # NOTE: Leaving occupants strictly fractional until aggregation per code
             if logic['calc'] in ['seats', 'units']:
                 totalOcc = float(self.get_safe_float(rec.SeatUnitCount, 0.0))
             elif logic['calc'] == 'area':
@@ -219,14 +232,21 @@ class PlumbingCalcWindow(forms.WPFWindow):
             
             rec.CalcLoad = totalOcc
             
-            if rec.OccType not in occ_groups:
-                occ_groups[rec.OccType] = {'total': 0.0, 'm': 0, 'f': 0}
+            # COMBINE BASE OCCUPANCIES (Seat and Area overrides merge into their parent)
+            base_occ = rec.OccType
+            if base_occ == "A-2-Seats": base_occ = "A-2"
+            elif base_occ in ["A-3-Exhibit", "A-3-Seats"]: base_occ = "A-3"
+            elif base_occ == "B-Seats": base_occ = "B"
+            
+            if base_occ not in occ_groups:
+                # Capture the logic map from the first room encountered for this group
+                occ_groups[base_occ] = {'total': 0.0, 'm': 0, 'f': 0, 'logic': logic}
                 
-            occ_groups[rec.OccType]['total'] += totalOcc
+            occ_groups[base_occ]['total'] += totalOcc
 
         math_strings = []
         for o_type, pops in occ_groups.items():
-            logic = OCC_MAP[o_type]
+            logic = pops['logic']
             
             # Floor-wide Occupancy Aggregation Round-Up Event
             t_pop = int(math.ceil(pops['total']))
@@ -239,7 +259,6 @@ class PlumbingCalcWindow(forms.WPFWindow):
             header = "\n[ {} ] Base Aggregated Load: {} ({}M / {}F)\n".format(o_type, t_pop, m_pop, f_pop)
             lines = [header]
             
-            # Note: Units-only occupancies skip fixture calculations in this loop
             if logic['calc'] != 'units':
                 for f_key, pop_target in [('mWC', m_pop), ('fWC', f_pop), ('mUr', m_pop), ('mLav', m_pop), ('fLav', f_pop), ('df', t_pop)]:
                     map_val = logic[f_key]
@@ -274,10 +293,15 @@ class PlumbingCalcWindow(forms.WPFWindow):
         self.lbl_DesignLoad.Text = "Total Design Load: {}".format(self.gtTotalLoad)
         self.MathBreakdownText.Text = "Aggregate M-WC: {:.2f} | Aggregate F-WC: {:.2f}\n".format(self.gt_mWC, self.gt_fWC) + "".join(math_strings)
         
+        # Safely refresh UI bindings without losing Sort State
+        current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
         self.RoomDataGrid.Items.Refresh()
+        if current_sorts and not list(self.RoomDataGrid.Items.SortDescriptions):
+            for sd in current_sorts:
+                self.RoomDataGrid.Items.SortDescriptions.Add(sd)
 
     def LevelFilter_SelectionChanged(self, sender, e):
-        self.update_math()
+        self.update_math(refresh_items=True)
 
     def ApplyBulk_Click(self, sender, e):
         selected = self.RoomDataGrid.SelectedItems
@@ -287,16 +311,28 @@ class PlumbingCalcWindow(forms.WPFWindow):
         fac_val = self.BulkFactor.Text
         su_val = self.BulkSeats.Text
         
+        # Read the new Bulk Exclude combo box
+        exc_val = None
+        if self.BulkExclude.SelectedItem:
+            exc_val = self.BulkExclude.SelectedItem.Content
+        
         for item in selected:
             if occ_val: item.OccType = occ_val
             if fac_val != "": item.FactorOverride = fac_val
             if su_val != "": item.SeatUnitCount = su_val
-        self.update_math()
+            if exc_val == "Yes": item.Exclude = True
+            elif exc_val == "No": item.Exclude = False
+            
+        self.update_math(refresh_items=False)
 
     def DataGrid_CellEditEnding(self, sender, e):
         def trigger_update():
-            self.update_math()
+            self.update_math(refresh_items=False)
         self.Dispatcher.BeginInvoke(System.Action(trigger_update))
+        
+    def Checkbox_Click(self, sender, e):
+        # Triggers instantly when the template checkbox is clicked!
+        self.update_math(refresh_items=False)
 
     def Calculate_Click(self, sender, e):
         with revit.Transaction("Update Plumbing Calculations"):
