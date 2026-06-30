@@ -3,7 +3,6 @@ import math
 import clr
 import System
 clr.AddReference('PresentationFramework')
-clr.AddReference('WindowsBase')
 from pyrevit import revit, DB, forms, script
 
 doc = revit.doc
@@ -193,15 +192,16 @@ class PlumbingCalcWindow(forms.WPFWindow):
             selected_level = self.LevelFilter.SelectedItem
             filtered_rooms = [r for r in self.all_rooms if selected_level == "All Levels" or r.Level == selected_level]
             
+            # Capture active user sorts before overwriting the ItemsSource
             current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
-            self.RoomDataGrid.ItemsSource = filtered_rooms
             
             if not current_sorts:
-                # Use fully qualified System names to bypass IronPython namespace fragmentation
-                self.RoomDataGrid.Items.SortDescriptions.Add(
-                    System.ComponentModel.SortDescription("Number", System.ComponentModel.ListSortDirection.Ascending)
-                )
+                # Bypass .NET completely: sort natively in Python memory to set Room Number default
+                filtered_rooms.sort(key=lambda x: x.Number)
+                self.RoomDataGrid.ItemsSource = filtered_rooms
             else:
+                self.RoomDataGrid.ItemsSource = filtered_rooms
+                # Push the captured sorts back onto the grid
                 for sd in current_sorts:
                     self.RoomDataGrid.Items.SortDescriptions.Add(sd)
         else:
@@ -289,11 +289,7 @@ class PlumbingCalcWindow(forms.WPFWindow):
         self.lbl_DesignLoad.Text = "Total Design Load: {}".format(self.gtTotalLoad)
         self.MathBreakdownText.Text = "Aggregate M-WC: {:.2f} | Aggregate F-WC: {:.2f}\n".format(self.gt_mWC, self.gt_fWC) + "".join(math_strings)
         
-        current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
         self.RoomDataGrid.Items.Refresh()
-        if current_sorts and not list(self.RoomDataGrid.Items.SortDescriptions):
-            for sd in current_sorts:
-                self.RoomDataGrid.Items.SortDescriptions.Add(sd)
 
     def LevelFilter_SelectionChanged(self, sender, e):
         self.update_math(refresh_items=True)
