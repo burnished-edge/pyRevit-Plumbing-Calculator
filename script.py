@@ -3,8 +3,7 @@ import math
 import clr
 import System
 clr.AddReference('PresentationFramework')
-clr.AddReference('WindowsBase') # <--- THIS IS THE MISSING PIECE
-from System.ComponentModel import SortDescription, ListSortDirection
+clr.AddReference('WindowsBase')
 from pyrevit import revit, DB, forms, script
 
 doc = revit.doc
@@ -198,7 +197,10 @@ class PlumbingCalcWindow(forms.WPFWindow):
             self.RoomDataGrid.ItemsSource = filtered_rooms
             
             if not current_sorts:
-                self.RoomDataGrid.Items.SortDescriptions.Add(SortDescription("Number", ListSortDirection.Ascending))
+                # Use fully qualified System names to bypass IronPython namespace fragmentation
+                self.RoomDataGrid.Items.SortDescriptions.Add(
+                    System.ComponentModel.SortDescription("Number", System.ComponentModel.ListSortDirection.Ascending)
+                )
             else:
                 for sd in current_sorts:
                     self.RoomDataGrid.Items.SortDescriptions.Add(sd)
