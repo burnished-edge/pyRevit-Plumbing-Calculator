@@ -123,9 +123,11 @@ class RoomRecord(object):
         logic = OCC_MAP.get(self._occType)
         if logic:
             if logic['calc'] == 'area':
-                self.SeatUnitCount = "-"
+                if self.SeatUnitCount != "-": self.SeatUnitCount = "-"
+                if self.FactorOverride == "-": self.FactorOverride = ""
             else:
-                self.FactorOverride = "-"
+                if self.FactorOverride != "-": self.FactorOverride = "-"
+                if self.SeatUnitCount == "-": self.SeatUnitCount = ""
 
     @property
     def ActiveFactorDisplay(self):
