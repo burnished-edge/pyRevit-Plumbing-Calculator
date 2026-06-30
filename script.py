@@ -353,6 +353,9 @@ class PlumbingCalcWindow(forms.WPFWindow):
     def LevelFilter_SelectionChanged(self, sender, e):
         self.update_math(refresh_items=True)
 
+    def PhaseFilter_SelectionChanged(self, sender, e):
+        self.update_math(refresh_items=True)
+
     def ApplyBulk_Click(self, sender, e):
         selected = self.RoomDataGrid.SelectedItems
         if not selected: return
