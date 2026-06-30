@@ -3,8 +3,8 @@ import math
 import clr
 import System
 clr.AddReference('PresentationFramework')
-from pyrevit import revit, DB, forms, script
 from System.ComponentModel import SortDescription, ListSortDirection
+from pyrevit import revit, DB, forms, script
 
 doc = revit.doc
 app = doc.Application
@@ -61,7 +61,6 @@ def run_linear_math(val, divisor):
     calc = val / float(divisor)
     return (calc, "{}/{} = {:.2f}".format(val, divisor, calc))
 
-# Simplified logic map (Area, Seats, Units)
 OCC_MAP = {
     'A-1': {'calc': 'seats', 'mWC': ([100,200,400], [1,2,3], 500), 'fWC': ([25,50,100,200,300,400], [1,2,3,4,6,8], 125), 'mUr': ([200,300,400,600], [1,2,3,4], 300), 'mLav': ([200,400,600,750], [1,2,3,4], 250), 'fLav': ([100,200,300,500,750], [1,2,4,5,6], 200), 'df': ([250,500,750], [1,2,3], 500)},
     'A-2': {'calc': 'area', 'fac': 30, 'mWC': ([50,150,300,400], [1,2,3,4], 250), 'fWC': ([25,50,100,200,300,400], [1,2,3,4,6,8], 125), 'mUr': ([200,300,400,600], [1,2,3,4], 300), 'mLav': ([150,200,400], [1,2,3], 250), 'fLav': ([150,200,400], [1,2,4], 200), 'df': ([250,500,750], [1,2,3], 500)},
@@ -94,9 +93,8 @@ class RoomRecord(object):
         self._occType = occ if occ else 'B'
         self.Exclude = exclude
         self.Level = level
-        self.CalcLoad = 0.0  # Raw fractional load
+        self.CalcLoad = 0.0
         
-        # Initialize UX fields cleanly
         self.FactorOverride = fac
         self.SeatUnitCount = seat_unit
         self._apply_ux_placeholders()
@@ -111,7 +109,6 @@ class RoomRecord(object):
         self._apply_ux_placeholders()
 
     def _apply_ux_placeholders(self):
-        """Automatically blanks out inapplicable parameters with a '-' based on occupancy type."""
         logic = OCC_MAP.get(self._occType)
         if logic:
             if logic['calc'] == 'area':
@@ -191,8 +188,7 @@ class PlumbingCalcWindow(forms.WPFWindow):
             return val if val > 0 else default_val
         except (ValueError, TypeError): return default_val
 
-def update_math(self, refresh_items=False):
-        # 1. Handle Filtering and Persistent Sorting
+    def update_math(self, refresh_items=False):
         if refresh_items:
             selected_level = self.LevelFilter.SelectedItem
             filtered_rooms = [r for r in self.all_rooms if selected_level == "All Levels" or r.Level == selected_level]
@@ -200,7 +196,6 @@ def update_math(self, refresh_items=False):
             current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
             self.RoomDataGrid.ItemsSource = filtered_rooms
             
-            # Default to sorting by Room Number, otherwise keep user's active sort
             if not current_sorts:
                 self.RoomDataGrid.Items.SortDescriptions.Add(SortDescription("Number", ListSortDirection.Ascending))
             else:
@@ -232,14 +227,13 @@ def update_math(self, refresh_items=False):
             
             rec.CalcLoad = totalOcc
             
-            # COMBINE BASE OCCUPANCIES (Seat and Area overrides merge into their parent)
+            # COMBINE BASE OCCUPANCIES
             base_occ = rec.OccType
             if base_occ == "A-2-Seats": base_occ = "A-2"
             elif base_occ in ["A-3-Exhibit", "A-3-Seats"]: base_occ = "A-3"
             elif base_occ == "B-Seats": base_occ = "B"
             
             if base_occ not in occ_groups:
-                # Capture the logic map from the first room encountered for this group
                 occ_groups[base_occ] = {'total': 0.0, 'm': 0, 'f': 0, 'logic': logic}
                 
             occ_groups[base_occ]['total'] += totalOcc
@@ -248,7 +242,6 @@ def update_math(self, refresh_items=False):
         for o_type, pops in occ_groups.items():
             logic = pops['logic']
             
-            # Floor-wide Occupancy Aggregation Round-Up Event
             t_pop = int(math.ceil(pops['total']))
             m_pop = int(math.ceil(t_pop / 2.0))
             f_pop = int(math.ceil(t_pop / 2.0))
@@ -293,7 +286,6 @@ def update_math(self, refresh_items=False):
         self.lbl_DesignLoad.Text = "Total Design Load: {}".format(self.gtTotalLoad)
         self.MathBreakdownText.Text = "Aggregate M-WC: {:.2f} | Aggregate F-WC: {:.2f}\n".format(self.gt_mWC, self.gt_fWC) + "".join(math_strings)
         
-        # Safely refresh UI bindings without losing Sort State
         current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
         self.RoomDataGrid.Items.Refresh()
         if current_sorts and not list(self.RoomDataGrid.Items.SortDescriptions):
@@ -311,7 +303,6 @@ def update_math(self, refresh_items=False):
         fac_val = self.BulkFactor.Text
         su_val = self.BulkSeats.Text
         
-        # Read the new Bulk Exclude combo box
         exc_val = None
         if self.BulkExclude.SelectedItem:
             exc_val = self.BulkExclude.SelectedItem.Content
@@ -331,13 +322,11 @@ def update_math(self, refresh_items=False):
         self.Dispatcher.BeginInvoke(System.Action(trigger_update))
         
     def Checkbox_Click(self, sender, e):
-        # Triggers instantly when the template checkbox is clicked!
         self.update_math(refresh_items=False)
 
     def Calculate_Click(self, sender, e):
         with revit.Transaction("Update Plumbing Calculations"):
             
-            # 1. Push precisely calculated fractions & settings back to the Room parameters
             for rec in self.all_rooms:
                 base_occ_param = rec.Element.LookupParameter("Plumb_BaseOccupants")
                 if base_occ_param: base_occ_param.Set(rec.CalcLoad)
@@ -351,7 +340,6 @@ def update_math(self, refresh_items=False):
                 exc_param = rec.Element.LookupParameter("Plumb_Exclude")
                 if exc_param: exc_param.Set(1 if rec.Exclude else 0)
                 
-            # 2. Update the Target Grand Totals Generic Annotation Family
             target_level = self.LevelFilter.SelectedItem
             if target_level == "All Levels":
                 forms.alert("Please select a specific Level from the dropdown before pushing data to a Grand Totals table.", title="Action Required")
