@@ -369,10 +369,12 @@ class PlumbingCalcWindow(forms.WPFWindow):
     def DataGrid_CellEditEnding(self, sender, e):
         def trigger_update():
             self.update_math(refresh_items=False)
-        self.Dispatcher.BeginInvoke(System.Action(trigger_update))
+        self.Dispatcher.BeginInvoke(System.Action(trigger_update), System.Windows.Threading.DispatcherPriority.ApplicationIdle)
         
     def Checkbox_Click(self, sender, e):
-        self.update_math(refresh_items=False)
+        def trigger_update():
+            self.update_math(refresh_items=False)
+        self.Dispatcher.BeginInvoke(System.Action(trigger_update), System.Windows.Threading.DispatcherPriority.ApplicationIdle)
 
     def Calculate_Click(self, sender, e):
         with revit.Transaction("Update Plumbing Calculations"):
