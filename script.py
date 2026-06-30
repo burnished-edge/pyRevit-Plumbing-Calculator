@@ -119,7 +119,7 @@ OCC_MAP = {
 # 3. DATA BINDING CLASS
 # ==========================================
 class RoomRecord(object):
-    def __init__(self, element, r_id, r_num, r_name, r_area, occ, fac, seat_unit, exclude, level):
+    def __init__(self, element, r_id, r_num, r_name, r_area, occ, fac, seat_unit, exclude, level, phase):
         self.Element = element
         self.Id = r_id
         self.Number = r_num
@@ -128,6 +128,7 @@ class RoomRecord(object):
         self._occType = occ if occ else 'B'
         self.Exclude = exclude
         self.Level = level
+        self.Phase = phase
         self.CalcLoad = 0.0
         
         self.FactorOverride = fac
