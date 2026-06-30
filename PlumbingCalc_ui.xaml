@@ -33,10 +33,18 @@
             </StackPanel>
         </Grid>
 
+     <!-- Bulk Edit Panel -->
         <Border Grid.Row="1" Background="#e2e8f0" CornerRadius="4" Padding="10" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Bulk Edit Selected Rows:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
                 
+                <TextBlock Text="Exclude:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <ComboBox x:Name="BulkExclude" Width="60" Margin="0,0,15,0">
+                    <ComboBoxItem Content="--"/>
+                    <ComboBoxItem Content="Yes"/>
+                    <ComboBoxItem Content="No"/>
+                </ComboBox>
+
                 <TextBlock Text="Type:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                 <ComboBox x:Name="BulkOccType" Width="180" Margin="0,0,15,0"/>
                 
@@ -49,18 +57,23 @@
                 <Button x:Name="ApplyBulkButton" Content="Apply" Width="100" Background="#0f172a" Foreground="White" Click="ApplyBulk_Click"/>
             </StackPanel>
         </Border>
-
         <Expander Grid.Row="2" x:Name="ErrorPanelExpander" Header="Problem Rooms (0)" Foreground="#b91c1c" Background="#fee2e2" Margin="0,0,0,10" Visibility="Collapsed">
             <ListBox x:Name="ErrorRoomList" MaxHeight="100" Background="#f8fafc" BorderThickness="0" Margin="5"/>
         </Expander>
 
         <DataGrid Grid.Row="3" x:Name="RoomDataGrid" AutoGenerateColumns="False" CanUserAddRows="False" AlternatingRowBackground="#fafafa" GridLinesVisibility="Horizontal" SelectionMode="Extended" CellEditEnding="DataGrid_CellEditEnding">
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="Exclude" Binding="{Binding Exclude, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+               <DataGridTemplateColumn Header="Exclude" Width="60">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding Exclude, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center" Click="Checkbox_Click"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Number" Binding="{Binding Number}" IsReadOnly="True" Width="70"/>
                 <DataGridTextColumn Header="Room Name" Binding="{Binding Name}" IsReadOnly="True" Width="200"/>
                 <DataGridTextColumn Header="Area (SF)" Binding="{Binding Area, StringFormat={}{0:F1}}" IsReadOnly="True" Width="80"/>
-                <DataGridComboBoxColumn Header="Occupancy Type" x:Name="OccTypeColumn" SelectedItemBinding="{Binding OccType, UpdateSourceTrigger=PropertyChanged}" Width="220"/>
+                <DataGridComboBoxColumn Header="Occupancy Type" x:Name="OccTypeColumn" SelectedItemBinding="{Binding OccType, UpdateSourceTrigger=PropertyChanged}" Width="175"/>
                 <DataGridTextColumn Header="Active Factor" Binding="{Binding ActiveFactorDisplay}" IsReadOnly="True" Width="90" Foreground="#52525b"/>
                 <DataGridTextColumn Header="Factor Override" Binding="{Binding FactorOverride, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
                 <DataGridTextColumn Header="Seat/Unit Count" Binding="{Binding SeatUnitCount, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
