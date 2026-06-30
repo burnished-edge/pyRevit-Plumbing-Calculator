@@ -193,6 +193,8 @@ class PlumbingCalcWindow(forms.WPFWindow):
             lvl = room.Level.Name if room.Level else "Unknown"
             self.levels.add(lvl)
             
+            phase_name = room.Phase.Name if room.Phase else "Unknown"
+            
             if area_param and area_param.AsDouble() > 0:
                 area_sf = area_param.AsDouble()
                 occ_param = room.LookupParameter("Plumb_OccupancyType")
@@ -207,13 +209,19 @@ class PlumbingCalcWindow(forms.WPFWindow):
                 exc_param = room.LookupParameter("Plumb_Exclude")
                 exc = (exc_param.AsInteger() == 1) if (exc_param and exc_param.HasValue) else False
 
-                self.all_rooms.append(RoomRecord(room, room.Id, num, name, area_sf, occ, fac, su, exc, lvl))
+                self.all_rooms.append(RoomRecord(room, room.Id, num, name, area_sf, occ, fac, su, exc, lvl, phase_name))
             else:
                 error_logs.append("Room {} - {} is unenclosed or unplaced.".format(num, name))
                 
         sorted_levels = ["All Levels"] + sorted(list(self.levels))
         self.LevelFilter.ItemsSource = sorted_levels
         self.LevelFilter.SelectedIndex = 0
+        
+        # Fetch project phases chronologically to set the default to the newest
+        project_phases = [p.Name for p in doc.Phases]
+        if not project_phases: project_phases = ["Unknown"]
+        self.PhaseFilter.ItemsSource = project_phases
+        self.PhaseFilter.SelectedItem = project_phases[-1]
         
         if error_logs:
             self.ErrorRoomList.ItemsSource = error_logs
@@ -229,7 +237,10 @@ class PlumbingCalcWindow(forms.WPFWindow):
     def update_math(self, refresh_items=False):
         if refresh_items:
             selected_level = self.LevelFilter.SelectedItem
-            filtered_rooms = [r for r in self.all_rooms if selected_level == "All Levels" or r.Level == selected_level]
+            selected_phase = self.PhaseFilter.SelectedItem
+            
+            # Now filters by BOTH Level and Phase
+            filtered_rooms = [r for r in self.all_rooms if (selected_level == "All Levels" or r.Level == selected_level) and r.Phase == selected_phase]
             
             current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
             if not current_sorts:
