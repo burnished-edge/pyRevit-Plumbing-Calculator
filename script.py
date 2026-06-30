@@ -37,6 +37,18 @@ def auto_bind_plumbing_parameters():
 # ==========================================
 # 2. FRACTIONAL MATH & STRING FORMATTING ENGINE
 # ==========================================
+GROUP_NAMES = {
+    'A-1': 'Group A-1 Assembly', 'A-2': 'Group A-2 Assembly', 'A-3': 'Group A-3 Assembly',
+    'A-4': 'Group A-4 Assembly', 'A-5': 'Group A-5 Assembly', 'B': 'Group B Business',
+    'E': 'Group E Educational', 'M': 'Group M Mercantile', 'I-1': 'Group I-1 Institutional',
+    'I-2-Rooms': 'Group I-2 Institutional', 'I-2-Waiting': 'Group I-2 Institutional',
+    'I-3-Cells': 'Group I-3 Institutional', 'I-3-Employee': 'Group I-3 Institutional',
+    'I-4': 'Group I-4 Institutional', 'R-1': 'Group R-1 Residential',
+    'R-2-Dorm': 'Group R-2 Residential', 'R-2-Apt': 'Group R-2 Residential',
+    'R-2-Employee': 'Group R-2 Residential', 'R-3-Group': 'Group R-3 Residential',
+    'R-3-Dwelling': 'Group R-3 Residential', 'R-4': 'Group R-4 Residential', 'S': 'Group S Storage'
+}
+
 def run_frac_math(prefix, val, limits, counts, over_divisor):
     if val <= 0: return (0.0, "{}: 0 occupants".format(prefix))
     
@@ -206,18 +218,13 @@ class PlumbingCalcWindow(forms.WPFWindow):
             selected_level = self.LevelFilter.SelectedItem
             filtered_rooms = [r for r in self.all_rooms if selected_level == "All Levels" or r.Level == selected_level]
             
-            # Capture active user sorts before overwriting the ItemsSource
             current_sorts = list(self.RoomDataGrid.Items.SortDescriptions)
-            
             if not current_sorts:
-                # Bypass .NET completely: sort natively in Python memory to set Room Number default
                 filtered_rooms.sort(key=lambda x: x.Number)
                 self.RoomDataGrid.ItemsSource = filtered_rooms
             else:
                 self.RoomDataGrid.ItemsSource = filtered_rooms
-                # Push the captured sorts back onto the grid
-                for sd in current_sorts:
-                    self.RoomDataGrid.Items.SortDescriptions.Add(sd)
+                for sd in current_sorts: self.RoomDataGrid.Items.SortDescriptions.Add(sd)
         else:
             filtered_rooms = self.RoomDataGrid.ItemsSource
             
@@ -235,7 +242,6 @@ class PlumbingCalcWindow(forms.WPFWindow):
             if not logic: continue
             
             totalOcc = 0.0
-            
             if logic['calc'] in ['seats', 'units']:
                 totalOcc = float(self.get_safe_float(rec.SeatUnitCount, 0.0))
             elif logic['calc'] == 'area':
@@ -244,23 +250,29 @@ class PlumbingCalcWindow(forms.WPFWindow):
             
             rec.CalcLoad = totalOcc
             
-            # COMBINE BASE OCCUPANCIES
             base_occ = rec.OccType
             if base_occ == "A-2-Seats": base_occ = "A-2"
             elif base_occ in ["A-3-Exhibit", "A-3-Seats"]: base_occ = "A-3"
             elif base_occ == "B-Seats": base_occ = "B"
             
             if base_occ not in occ_groups:
-                occ_groups[base_occ] = {'loads': [], 'logic': logic}
+                # Force the use of the BASE logic so the UI factors don't scramble
+                occ_groups[base_occ] = {'area': 0.0, 'seats': 0.0, 'units': 0.0, 'logic': OCC_MAP[base_occ]}
                 
-            occ_groups[base_occ]['loads'].append(totalOcc)
+            if logic['calc'] == 'area': occ_groups[base_occ]['area'] += totalOcc
+            elif logic['calc'] == 'seats': occ_groups[base_occ]['seats'] += totalOcc
+            elif logic['calc'] == 'units': occ_groups[base_occ]['units'] += totalOcc
 
-        math_strings = []
-        for o_type, data in occ_groups.items():
+        # Reset the WPF TextBlock for Inline Bolding
+        self.MathBreakdownText.Text = ""
+
+        for o_type, data in sorted(occ_groups.items()):
             logic = data['logic']
-            loads = data['loads']
+            a_load = data['area']
+            s_load = data['seats']
+            u_load = data['units']
             
-            total_unrounded = sum(loads)
+            total_unrounded = a_load + s_load + u_load
             t_pop = int(math.ceil(total_unrounded))
             m_pop = int(math.ceil(t_pop / 2.0))
             f_pop = int(math.ceil(t_pop / 2.0))
@@ -268,23 +280,27 @@ class PlumbingCalcWindow(forms.WPFWindow):
             gtMale += m_pop
             gtFemale += f_pop
             
-            if len(loads) > 1:
-                load_str = "({}) = ".format(" + ".join(["{:.2f}".format(L).rstrip('0').rstrip('.') for L in loads]))
-            else:
-                load_str = ""
-                
-            header = "Group {}\nAggregated Base Load: {}{} Occupants -> 50/50 Split rounds up to {} Male & {} Female".format(o_type, load_str, t_pop, m_pop, f_pop)
-            lines = [header]
+            # Format: (100 Area + 7 Seats)
+            parts = []
+            if a_load > 0: parts.append("{:g} Area".format(a_load))
+            if s_load > 0: parts.append("{:g} Seats".format(s_load))
+            if u_load > 0: parts.append("{:g} Units".format(u_load))
             
+            load_str = "({}) = ".format(" + ".join(parts)) if len(parts) > 1 else ""
+            
+            friendly_name = GROUP_NAMES.get(o_type, "Group " + o_type)
+            
+            # Print BOLD Headers
+            run_title = System.Windows.Documents.Run(friendly_name + "\n")
+            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(run_title))
+            
+            run_agg = System.Windows.Documents.Run("Aggregated Base Load: {}{} Occupants -> 50/50 Split rounds up to {} Male & {} Female\n".format(load_str, t_pop, m_pop, f_pop))
+            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(run_agg))
+            
+            lines = []
             if logic['calc'] != 'units':
-                f_map = [
-                    ('mWC', "WC (M)", m_pop), 
-                    ('fWC', "WC (F)", f_pop), 
-                    ('mUr', "Urinals", m_pop), 
-                    ('mLav', "Lavatory (M)", m_pop), 
-                    ('fLav', "Lavatory (F)", f_pop), 
-                    ('df', "Drinking Fountains", t_pop)
-                ]
+                f_map = [('mWC', "WC (M)", m_pop), ('fWC', "WC (F)", f_pop), ('mUr', "Urinals", m_pop), 
+                         ('mLav', "Lavatory (M)", m_pop), ('fLav', "Lavatory (F)", f_pop), ('df', "Drinking Fountains", t_pop)]
                 
                 for f_key, f_prefix, pop_target in f_map:
                     map_val = logic[f_key]
@@ -303,8 +319,9 @@ class PlumbingCalcWindow(forms.WPFWindow):
                     if f_key == 'mLav': self.gt_mLav += calc
                     if f_key == 'fLav': self.gt_fLav += calc
                     if f_key == 'df': self.gt_df += calc
-                
-            math_strings.append("\n".join(lines) + "\n")
+                    
+            run_math = System.Windows.Documents.Run("\n".join(lines) + "\n\n")
+            self.MathBreakdownText.Inlines.Add(run_math)
 
         self.gtTotalLoad = gtMale + gtFemale
 
@@ -317,6 +334,8 @@ class PlumbingCalcWindow(forms.WPFWindow):
         self.lbl_AgLav.Text = "Lavatories: {}".format(int(math.ceil(self.gt_mLav + self.gt_fLav)))
         self.lbl_DF.Text = "Drinking Fountains: {}".format(int(math.ceil(self.gt_df)))
         self.lbl_DesignLoad.Text = "Total Design Load: {}".format(self.gtTotalLoad)
+        
+        self.RoomDataGrid.Items.Refresh()
         
         # Apply exactly formatted string
         self.MathBreakdownText.Text = "\n".join(math_strings)
