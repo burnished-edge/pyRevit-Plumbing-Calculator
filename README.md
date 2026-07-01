@@ -111,10 +111,7 @@ If downloading raw files from this repository:
 
 ### Step 4: Connect to pyRevit and Reload
 
-1. Open Revit and navigate to the **pyRevit** tab on the ribbon.
-2. Open the **pyRevit settings drop-down** (gear/hamburger menu icon) and click **Settings**.
-3. Go to **Custom Extension Folders**, select **Add Folder**, and point it to your root path from Step 2 (either `C:\pyRevit_CustomTools\` or `%APPDATA%\pyRevit\Extensions\`).
-4. Click **Save Settings and Reload**. The new ribbon button panel will generate on your screen.
+1. In the **pyRevit** tab click **Reload** on the left side. The new ribbon button panel will generate on your screen.
 
 ![pyRevit Settings Extension Path Setup](docs/images/pyrevit_settings.png)
 
