@@ -50,6 +50,19 @@ GROUP_NAMES = {
     'R-3-Dwelling': 'Group R-3 Residential', 'R-4': 'Group R-4 Residential', 'S': 'Group S Storage'
 }
 
+# Color palette for Occupancy Badges (HTML aesthetic)
+GROUP_COLORS = {
+    'A-1': '#ffe4e6', 'A-2': '#fef08a', 'A-3': '#d9f99d',
+    'A-4': '#bbf7d0', 'A-5': '#a7f3d0', 'B': '#bae6fd',
+    'E': '#99f6e4', 'F': '#c7d2fe', 'I-1': '#e0e7ff',
+    'I-2-Rooms': '#ddd6fe', 'I-2-Waiting': '#ddd6fe', 
+    'I-3-Cells': '#f3e8ff', 'I-3-Employee': '#f3e8ff',
+    'I-4': '#fbcfe8', 'M': '#fce7f3', 'R-1': '#fecdd3',
+    'R-2-Dorm': '#fecaca', 'R-2-Apt': '#fecaca',
+    'R-2-Employee': '#fecaca', 'R-3-Group': '#fecaca',
+    'R-3-Dwelling': '#fecaca', 'R-4': '#fecaca', 'S': '#e2e8f0'
+}
+
 def run_frac_math(prefix, val, limits, counts, over_divisor):
     if val <= 0: return (0.0, "{}: 0 occupants".format(prefix))
     
@@ -182,6 +195,24 @@ class PlumbingCalcWindow(forms.WPFWindow):
         self.load_rooms()
         self.update_math(refresh_items=True)
 
+    def create_colored_badge(self, text, hex_color):
+        """Creates an HTML-style padded badge for WPF TextBlocks"""
+        border = System.Windows.Controls.Border()
+        border.Background = System.Windows.Media.BrushConverter().ConvertFromString(hex_color)
+        border.CornerRadius = System.Windows.CornerRadius(4)
+        border.Padding = System.Windows.Thickness(5, 2, 5, 2)
+        border.Margin = System.Windows.Thickness(2, -2, 2, -2)
+        
+        tb = System.Windows.Controls.TextBlock()
+        tb.Text = str(text)
+        tb.FontWeight = System.Windows.FontWeights.Bold
+        tb.Foreground = System.Windows.Media.BrushConverter().ConvertFromString("#0f172a") # Dark text
+        
+        border.Child = tb
+        container = System.Windows.Documents.InlineUIContainer(border)
+        container.BaselineAlignment = System.Windows.BaselineAlignment.Center
+        return container
+
     def load_rooms(self):
         rooms = DB.FilteredElementCollector(doc).OfCategory(DB.BuiltInCategory.OST_Rooms).WhereElementIsNotElementType().ToElements()
         error_logs = []
@@ -288,14 +319,20 @@ class PlumbingCalcWindow(forms.WPFWindow):
             elif logic['calc'] == 'seats': occ_groups[base_occ]['seats'] += totalOcc
             elif logic['calc'] == 'units': occ_groups[base_occ]['units'] += totalOcc
 
-        # Reset the WPF TextBlock for Inline Bolding
+        # Reset the WPF TextBlock for Inline Bolding and Badges
         self.MathBreakdownText.Text = ""
+        
+        # Dictionaries to hold the final aggregate math strings for the bottom breakdown
+        final_aggregates = {
+            'mWC': [], 'fWC': [], 'mUr': [], 'mLav': [], 'fLav': [], 'df': []
+        }
 
         for o_type, data in sorted(occ_groups.items()):
             logic = data['logic']
             a_load = data['area']
             s_load = data['seats']
             u_load = data['units']
+            hex_color = GROUP_COLORS.get(o_type, '#e2e8f0') # Default gray if missing
             
             total_unrounded = a_load + s_load + u_load
             t_pop = int(math.ceil(total_unrounded))
@@ -322,7 +359,6 @@ class PlumbingCalcWindow(forms.WPFWindow):
             run_agg = System.Windows.Documents.Run("Aggregated Base Load: {}{} Occupants -> 50/50 Split rounds up to {} Male & {} Female\n".format(load_str, t_pop, m_pop, f_pop))
             self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(run_agg))
             
-            lines = []
             if logic['calc'] != 'units':
                 f_map = [('mWC', "WC (M)", m_pop), ('fWC', "WC (F)", f_pop), ('mUr', "Urinals", m_pop), 
                          ('mLav', "Lavatory (M)", m_pop), ('fLav', "Lavatory (F)", f_pop), ('df', "Drinking Fountains", t_pop)]
@@ -336,7 +372,12 @@ class PlumbingCalcWindow(forms.WPFWindow):
                     else:
                         calc, str_out = (0.0, "{}: 0 occupants".format(f_prefix))
                     
-                    lines.append(str_out)
+                    # Add standard text line for the group breakdown
+                    self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Run("  " + str_out + "\n"))
+                    
+                    # Store the exact fraction and its assigned color for the Grand Total aggregation
+                    if calc > 0:
+                        final_aggregates[f_key].append({'val': calc, 'color': hex_color})
                     
                     if f_key == 'mWC': self.gt_mWC += calc
                     if f_key == 'fWC': self.gt_fWC += calc
@@ -345,8 +386,35 @@ class PlumbingCalcWindow(forms.WPFWindow):
                     if f_key == 'fLav': self.gt_fLav += calc
                     if f_key == 'df': self.gt_df += calc
                     
-            run_math = System.Windows.Documents.Run("\n".join(lines) + "\n\n")
-            self.MathBreakdownText.Inlines.Add(run_math)
+            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Run("\n"))
+
+        # --- BUILD THE FINAL COLOR-CODED AGGREGATION AT THE BOTTOM ---
+        self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(System.Windows.Documents.Run("FINAL FIXTURE AGGREGATION\n")))
+        
+        display_names = {'mWC': 'Male Water Closets', 'fWC': 'Female Water Closets', 'mUr': 'Male Urinals', 'mLav': 'Male Lavatories', 'fLav': 'Female Lavatories', 'df': 'Drinking Fountains'}
+        
+        for key, name in display_names.items():
+            items = final_aggregates[key]
+            if not items: continue
+            
+            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Run(name + ": "))
+            
+            total_sum = 0.0
+            for i, item in enumerate(items):
+                # Add the colored badge
+                self.MathBreakdownText.Inlines.Add(self.create_colored_badge("{:.2f}".format(item['val']), item['color']))
+                total_sum += item['val']
+                
+                # Add a "+" sign if it's not the last item
+                if i < len(items) - 1:
+                    self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Run(" + "))
+            
+            # Finish the equation with the rounded total
+            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Run(" = {:.2f} ➔ ".format(total_sum)))
+            
+            run_total = System.Windows.Documents.Run("{} Fixtures\n".format(int(math.ceil(total_sum))))
+            run_total.Foreground = System.Windows.Media.BrushConverter().ConvertFromString("#2563eb") # Blue accent
+            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(run_total))
 
         self.gtTotalLoad = gtMale + gtFemale
 
