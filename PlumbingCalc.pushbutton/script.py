@@ -322,6 +322,9 @@ class PlumbingCalcWindow(forms.WPFWindow):
         # Reset the WPF TextBlock for Inline Bolding and Badges
         self.MathBreakdownText.Text = ""
         
+        # Force the overall breakdown text to dark slate/black, overriding the blue Expander default
+        self.MathBreakdownText.Foreground = System.Windows.Media.BrushConverter().ConvertFromString("#0f172a")
+        
         # Dictionaries to hold the final aggregate math strings for the bottom breakdown
         final_aggregates = {
             'mWC': [], 'fWC': [], 'mUr': [], 'mLav': [], 'fLav': [], 'df': []
@@ -352,9 +355,9 @@ class PlumbingCalcWindow(forms.WPFWindow):
             
             friendly_name = GROUP_NAMES.get(o_type, "Group " + o_type)
             
-            # Print BOLD Headers
-            run_title = System.Windows.Documents.Run(friendly_name + "\n")
-            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(run_title))
+            # Print Color-Coded Header Badge for the Group Name
+            self.MathBreakdownText.Inlines.Add(self.create_colored_badge(friendly_name, hex_color))
+            self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Run("\n"))
             
             run_agg = System.Windows.Documents.Run("Aggregated Base Load: {}{} Occupants -> 50/50 Split rounds up to {} Male & {} Female\n".format(load_str, t_pop, m_pop, f_pop))
             self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(run_agg))
@@ -395,9 +398,17 @@ class PlumbingCalcWindow(forms.WPFWindow):
         # --- BUILD THE FINAL COLOR-CODED AGGREGATION AT THE BOTTOM ---
         self.MathBreakdownText.Inlines.Add(System.Windows.Documents.Bold(System.Windows.Documents.Run("FINAL FIXTURE AGGREGATION\n")))
         
-        display_names = {'mWC': 'Male Water Closets', 'fWC': 'Female Water Closets', 'mUr': 'Male Urinals', 'mLav': 'Male Lavatories', 'fLav': 'Female Lavatories', 'df': 'Drinking Fountains'}
+        # Using a list of tuples enforces strict ordering, bypassing Python 2.7 dictionary scrambling
+        display_keys = [
+            ('mWC', "WC (M)"), 
+            ('fWC', "WC (F)"), 
+            ('mUr', "Urinals"), 
+            ('mLav', "Lavatory (M)"), 
+            ('fLav', "Lavatory (F)"), 
+            ('df', "Drinking Fountains")
+        ]
         
-        for key, name in display_names.items():
+        for key, name in display_keys:
             items = final_aggregates[key]
             if not items: continue
             
