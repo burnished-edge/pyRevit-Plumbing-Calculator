@@ -161,6 +161,8 @@ The calculator is now completely installed and configured!
 5. Expand the **View Math Breakdown** panel at the base to evaluate the raw aggregated code math formatting.
 6. Click **Calculate & Push Data to Revit**. This automatically writes parameter values to individual rooms, targets your schedule block instance via `GT_Level_Target`, and updates the sheet schedule integers instantly.
 
+>Note if the table isn't placed or if the Level name isn't filled out or doesn't match any level names, you will see an error message. This can be safely ignored if you don't need the table.
+
 ![Plugin Main Window Dashboard](docs/images/calculator_dashboard_ui.png)
 
 ---
