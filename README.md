@@ -146,7 +146,7 @@ To display the project grand totals dynamically on your code documentation sheet
 3. Select the family instance, look at the Properties Palette, and locate the **GT_Level_Target** text field.
 4. Type the exact case-sensitive name of the level you wish to report (e.g., `Level 1`). 
 
-![Shared Parameter Project Category Binding Options](docs/images/project_parameters_binding.png)
+![Shared Parameter Project Category Binding Options](docs/images/generic_annotation.png)
 
 The calculator is now completely installed and configured!
 
