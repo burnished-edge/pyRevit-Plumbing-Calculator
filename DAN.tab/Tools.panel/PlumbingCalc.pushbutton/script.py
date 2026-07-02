@@ -76,11 +76,6 @@ def setup_plumbing_parameters():
     if bindings_added > 0:
         forms.alert("Successfully auto-bound {} parameters.".format(bindings_added), title="Setup Complete")
         
-    return True
-
-# Initialize parameters as the script loads
-setup_plumbing_parameters()
-
 # ==========================================
 # 2. FRACTIONAL MATH & STRING FORMATTING ENGINE
 # ==========================================
