@@ -34,12 +34,11 @@ Please complete the following steps to get the plugin installed and configured.
 You can install this extension directly from this GitHub repository using pyRevit's built-in tools.
 
 1. Open Revit and navigate to the **pyRevit** tab on the ribbon.
-2. Click the **pyRevit** drop-down menu (gear/hamburger icon) and select **Extensions**.
-3. In the Extension Manager window, click **Add Custom Extension** (or equivalent depending on your pyRevit version).
-4. Provide a name for the tool and paste this repository's Git URL:
-   `[GITHUB REPO URL]`
-5. Click **Install**. 
-6. Once the installation completes, click **Save Settings and Reload** in the pyRevit menu. The new ribbon button panel will generate on your screen.
+2. Click the **pyRevit** drop-down menu (small triangle icon next to "pyRevit") and select **Extensions**.
+3. In the Extension Manager window, paste this repository's Git URL into the GIT URL field:
+   `[[GIT URL]](https://github.com/burnished-edge/pyRevit-Plumbing-Calculator.git)`
+4. Provide a name for the tool if prompted, then click **Add and install**. 
+5. Once the installation completes, close the Extension Manager and click **Reload** in the pyRevit ribbon menu. The new ribbon button panel will generate on your screen.
 
 ---
 
@@ -51,7 +50,7 @@ There is no need to manually set up or link a Shared Parameters text file. The t
 2. The script will quietly scan your active project database. 
 3. Finding the required fields unlinked, it will automatically inject the necessary shared parameters directly into your project and bind them to the native **Rooms** category (`OST_Rooms`).
 4. Upon successful generation, a dialogue pop-up window will notify you that the parameter injection and binding succeeded. 
-5. Close the pop-up, and your calculator dashboard will open instantly. On all future clicks, the tool will bypass this setup sequence seamlessly.
+5. Close the pop-up, and your calculator dashboard will open. On all future clicks, the tool will bypass this setup sequence seamlessly.
 
 > **Fallback Note**: If corporate model permissions cause the automated binding routine to fail, please follow the manual override configuration steps detailed in the [Manual Parameter Binding Appendix](#manual-parameter-binding-appendix).
 
