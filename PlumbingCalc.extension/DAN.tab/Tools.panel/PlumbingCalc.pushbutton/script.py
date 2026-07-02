@@ -11,28 +11,75 @@ app = doc.Application
 # ==========================================
 # 1. AUTOMATED PARAMETER SETUP
 # ==========================================
-def auto_bind_plumbing_parameters():
+def setup_plumbing_parameters():
+    # 1. Open the user's active Shared Parameter file
     sp_file = app.OpenSharedParameterFile()
-    if not sp_file: return
-    plumb_group = sp_file.Groups.get_Item("PlumbingCalc")
-    if not plumb_group: return
     
-    category_set = app.Create.NewCategorySet()
-    room_category = doc.Settings.Categories.get_Item(DB.BuiltInCategory.OST_Rooms)
-    category_set.Insert(room_category)
-
-    binding_map = doc.ParameterBindings
+    if sp_file is None:
+        forms.alert("No Shared Parameter file is loaded in Revit. Please load a company file first.", exitscript=True)
+        return False
+        
+    # 2. Find or create the PlumbingCalc group
+    group_name = "PlumbingCalc"
+    sp_group = sp_file.Groups.get_Item(group_name)
+    if sp_group is None:
+        sp_group = sp_file.Groups.Create(group_name)
+        
+    # 3. Define the parameters from your uploaded text file
+    params_to_add = {
+        "Plumb_Exclude": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "Plumb_OccupancyType": DB.SpecTypeId.String.Text if hasattr(DB.SpecTypeId, 'String') else DB.ParameterType.Text,
+        "Plumb_LoadFactor": DB.SpecTypeId.Number if hasattr(DB.SpecTypeId, 'Number') else DB.ParameterType.Number,
+        "Plumb_SeatCount": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "Plumb_UnitCount": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer
+    }
+    
+    # Target Category: Rooms
+    room_cat = doc.Settings.Categories.get_Item(DB.BuiltInCategory.OST_Rooms)
+    cat_set = app.Create.NewCategorySet()
+    cat_set.Insert(room_cat)
+    
+    # BuiltInParameterGroup where these will show up in the Properties Panel
+    ui_group = DB.GroupTypeId.Data if hasattr(DB, 'GroupTypeId') else DB.BuiltInParameterGroup.PG_DATA
+    
+    # 4. Open a transaction to bind parameters to the project
+    t = DB.Transaction(doc, "Auto-Bind Plumbing Parameters")
+    t.Start()
+    
     bindings_added = 0
-
-    with revit.Transaction("Auto-Bind Plumbing Parameters"):
-        for sp_def in plumb_group.Definitions:
-            if not binding_map.get_Item(sp_def):
-                instance_binding = app.Create.NewInstanceBinding(category_set)
-                if binding_map.Insert(sp_def, instance_binding, DB.GroupTypeId.Data):
-                    bindings_added += 1
-
+    for param_name, param_type in params_to_add.items():
+        # Check if the parameter exists in the Shared Parameter file
+        sp_def = sp_group.Definitions.get_Item(param_name)
+        
+        if sp_def is None:
+            # Create it safely with a new GUID
+            opt = DB.ExternalDefinitionCreationOptions(param_name, param_type)
+            opt.UserModifiable = True
+            sp_def = sp_group.Definitions.Create(opt)
+            print("Injected into Shared Parameters: {}".format(param_name))
+            
+        # 5. Check if it is already bound to the project
+        binding_map = doc.ParameterBindings
+        existing_binding = binding_map.get_Item(sp_def)
+        
+        if existing_binding is None:
+            # Bind it to the Rooms category as an Instance Parameter
+            new_binding = app.Create.NewInstanceBinding(cat_set)
+            
+            # Cross-version compatibility insertion
+            binding_map.Insert(sp_def, new_binding, ui_group)
+            bindings_added += 1
+            print("Bound to Rooms category: {}".format(param_name))
+            
+    t.Commit()
+    
     if bindings_added > 0:
         forms.alert("Successfully auto-bound {} parameters.".format(bindings_added), title="Setup Complete")
+        
+    return True
+
+# Initialize parameters as the script loads
+setup_plumbing_parameters()
 
 # ==========================================
 # 2. FRACTIONAL MATH & STRING FORMATTING ENGINE
