@@ -20,121 +20,44 @@ It aggregates occupant loads by occupancy group per floor, tracks exact decimal 
 
 ## Installation & Setup Workflow
 
-Please complete the following steps in order to get the plugin up and running.
+Please complete the following steps to get the plugin installed and configured.
 
-1. [Step 1: Set Up the Shared Parameters File](#step-1-set-up-the-shared-parameters-file)
-2. [Step 2: Establish the pyRevit Folder Directory](#step-2-establish-the-pyrevit-folder-directory)
-3. [Step 3: Deploy the Extension Files](#step-3-deploy-the-extension-files)
-4. [Step 4: Connect to pyRevit and Reload](#step-4-connect-to-pyrevit-and-reload)
-5. [Step 5: Run Automated Parameter Binding](#step-5-run-automated-parameter-binding)
-6. [Step 6: Build the Schedule Sheet Annotation Table](#step-6-build-the-schedule-sheet-annotation-table)
+1. [Step 1: Install via pyRevit Extension Manager](#step-1-install-via-pyrevit-extension-manager)
+2. [Step 2: First Run & Automated Parameter Binding](#step-2-first-run--automated-parameter-binding)
+3. [Step 3: Build the Schedule Sheet Annotation Table](#step-3-build-the-schedule-sheet-annotation-table)
+4. [Keeping the Tool Updated](#keeping-the-tool-updated)
 
 ---
 
-### Step 1: Set Up the Shared Parameters File
+### Step 1: Install via pyRevit Extension Manager
 
-Revit requires specific Shared Parameters to handle data tracking for custom scripts. You can link your project to the prebuilt definition file provided in this repository.
+You can install this extension directly from this GitHub repository using pyRevit's built-in tools.
 
-#### Option A: Use the Prebuilt Shared Parameters File (Recommended)
-1. In Revit, navigate to the **Manage** tab on the ribbon and click **Shared Parameters**.
-2. Click **Browse** and point Revit directly to the included file at: 
-   `[SHARED PARAMETERS FILEPATH]`
-3. Click **OK** to cache the definitions.
-
-#### Option B: Manual Entry into an Existing Shared Parameters File
-If you need to merge these parameters manually into your firm's existing master file:
-1. Open your master Shared Parameters `.txt` file in Notepad.
-2. Add a new group identifier under the `*GROUP` block (ensure the Group ID number is sequential and unique):
-   ```text
-   GROUP	5	PlumbingCalc
-   ```
-3. Append the following database configuration schema block directly to the bottom of the `*PARAM` section:
-   ```text
-   PARAM	3b1a2c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d	Plumb_OccupancyType	TEXT	-	5	1	1
-   PARAM	4c2b3d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e	Plumb_LoadFactor	NUMBER	-	5	1	1
-   PARAM	5d3c4e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f	Plumb_SeatUnitCount	INTEGER	-	5	1	1
-   PARAM	6e4d5f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a	Plumb_Exclude	YESNO	-	5	1	1
-   PARAM	7f5e6a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b	Plumb_RoomOccupants	NUMBER	-	5	1	1
-   ```
-4. Save and close the file.
-
-*Move on to [Step 2: Establish the pyRevit Folder Directory](#step-2-establish-the-pyrevit-folder-directory).*
+1. Open Revit and navigate to the **pyRevit** tab on the ribbon.
+2. Click the **pyRevit** drop-down menu (gear/hamburger icon) and select **Extensions**.
+3. In the Extension Manager window, click **Add Custom Extension** (or equivalent depending on your pyRevit version).
+4. Provide a name for the tool and paste this repository's Git URL:
+   `[GITHUB REPO URL]`
+5. Click **Install**. 
+6. Once the installation completes, click **Save Settings and Reload** in the pyRevit menu. The new ribbon button panel will generate on your screen.
 
 ---
 
-### Step 2: Establish the pyRevit Folder Directory
+### Step 2: First Run & Automated Parameter Binding
 
-pyRevit searches for a rigid folder naming hierarchy to generate tabs, panels, and ribbon buttons. Create the nested folder structure using one of the two options below depending on your Windows user permissions:
-
-#### Option A: Local C: Drive Root (Requires Local Admin Privileges)
-Use this option if you have full administrative rights to your machine:
-```text
-C:\pyRevit_CustomTools\
-└── MyTools.extension\
-    └── CAD Tools.tab\
-        └── Visibility.panel\
-```
-
-#### Option B: User AppData Directory (No Admin Privileges Required)
-If Windows permissions restrict root access to the C: drive, build the extension tree directly inside your local roaming profile directory:
-```text
-%APPDATA%\pyRevit\Extensions\
-└── MyTools.extension\
-    └── CAD Tools.tab\
-        └── Visibility.panel\
-```
-
-*Move on to [Step 3: Deploy the Extension Files](#step-3-deploy-the-extension-files).*
-
----
-
-### Step 3: Deploy the Extension Files
-
-#### Option A: Copy Prebuilt Bundle Folder (Recommended)
-1. Locate the prebuilt tool folder at: `[FILEPATH]`
-2. Copy the entire `PlumbingCalc.pushbutton` folder.
-3. Paste it directly inside the `Visibility.panel` directory you targeted in [Step 2](#step-2-establish-the-pyrevit-folder-directory).
-
-#### Option B: Manual Source Deployment from GitHub
-If downloading raw files from this repository:
-1. Inside your `Visibility.panel` directory, create a new folder named exactly `PlumbingCalc.pushbutton`.
-2. Place the following source files directly into it:
-   * **`script.py`**: The Python calculation engine.
-   * **`PlumbingCalc_ui.xaml`**: The WPF layout window.
-   * **`icon.png`**: The ribbon user-interface button graphic.
-
-![Extension Directory Contents](docs/images/extension_directory.png)
-
-*Move on to [Step 4: Connect to pyRevit and Reload](#step-4-connect-to-pyrevit-and-reload).*
-
----
-
-### Step 4: Connect to pyRevit and Reload
-
-1. In the **pyRevit** tab click **Reload** on the left side. The new ribbon button panel will generate on your screen.
-
-![pyRevit Settings Extension Path Setup](docs/images/pyrevit_settings.png)
-
-*Move on to [Step 5: Run Automated Parameter Binding](#step-5-run-automated-parameter-binding).*
-
----
-
-### Step 5: Run Automated Parameter Binding
-
-There is no need to manually bind variables across your model elements. The tool includes an integrated "smart check" mechanism that configures its own database schema on its initialization loop.
+There is no need to manually set up or link a Shared Parameters text file. The tool includes an integrated setup mechanism that injects and configures its own database schema upon initialization.
 
 1. Click your newly loaded **Plumbing Calc** button on the Revit ribbon.
-2. The script will quietly scan your active project database in the background.
-3. Finding the fields unlinked, it will automatically register and bind all 13 parameters to the native **Rooms** category (`OST_Rooms`).
-4. Upon successful generation, a dialogue window will report that the setup succeeded and your dashboard will open instantly. On all future clicks, it will bypass this sequence seamlessly.
+2. The script will quietly scan your active project database. 
+3. Finding the required fields unlinked, it will automatically inject the necessary shared parameters directly into your project and bind them to the native **Rooms** category (`OST_Rooms`).
+4. Upon successful generation, a dialogue pop-up window will notify you that the parameter injection and binding succeeded. 
+5. Close the pop-up, and your calculator dashboard will open instantly. On all future clicks, the tool will bypass this setup sequence seamlessly.
 
 > **Fallback Note**: If corporate model permissions cause the automated binding routine to fail, please follow the manual override configuration steps detailed in the [Manual Parameter Binding Appendix](#manual-parameter-binding-appendix).
 
-*Move on to [Step 6: Build the Schedule Sheet Annotation Table](#step-6-build-the-schedule-sheet-annotation-table).*
-
 ---
 
-### Step 6: Build the Schedule Sheet Annotation Table
+### Step 3: Build the Schedule Sheet Annotation Table
 
 > ⚠️ **SYSTEM REQUIREMENT**: The accompanying grand total schedule annotation family requires **Autodesk Revit 2026 or newer** due to fundamental database architecture shifts within modern API data schemas.
 
@@ -149,6 +72,17 @@ To display the project grand totals dynamically on your code documentation sheet
 ![Shared Parameter Project Category Binding Options](docs/images/generic_annotation.png)
 
 The calculator is now completely installed and configured!
+
+---
+
+## Keeping the Tool Updated
+
+Because the extension is linked directly to GitHub via pyRevit, applying future updates is effortless. Whenever a new version or bug fix is pushed to this repository:
+
+1. Open the **pyRevit Extension Manager**.
+2. Locate the Plumbing Calculator in your installed list.
+3. Click **Update**. pyRevit will automatically pull the latest source code from GitHub and apply the changes. 
+4. Reload pyRevit to see the updates take effect.
 
 ---
 
