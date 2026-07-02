@@ -33,12 +33,12 @@ Please complete the following steps to get the plugin installed and configured.
 
 You can install this extension directly from this GitHub repository using pyRevit's built-in tools.
 
-1. Open Revit and navigate to the **pyRevit** tab on the ribbon.
-2. Click the **pyRevit** drop-down menu (small triangle icon next to "pyRevit") and select **Extensions**.
+1. Open Revit and navigate to the `pyRevit` tab on the ribbon.
+2. Click the `pyRevit` drop-down menu (small triangle icon next to "pyRevit") and select `Extensions`.
 3. In the Extension Manager window, paste this repository's Git URL into the GIT URL field:
    `https://github.com/burnished-edge/pyRevit-Plumbing-Calculator.git`
-4. Provide a name for the tool if prompted, then click **Add and install**. 
-5. Once the installation completes, close the Extension Manager and click **Reload** in the pyRevit ribbon menu. The new ribbon button panel will generate on your screen.
+4. Provide a name for the tool if prompted, then click `Add and install`. 
+5. Once the installation completes, close the Extension Manager and click `Reload` in the pyRevit ribbon menu. The new ribbon button panel will generate on your screen.
 
 ---
 
@@ -46,9 +46,9 @@ You can install this extension directly from this GitHub repository using pyRevi
 
 There is no need to manually set up or link a Shared Parameters text file. The tool includes an integrated setup mechanism that injects and configures its own database schema upon initialization.
 
-1. Click your newly loaded **Plumbing Calc** button on the Revit ribbon.
+1. Click your newly loaded `Plumbing Calc` button on the Revit ribbon.
 2. The script will quietly scan your active project database. 
-3. Finding the required fields unlinked, it will automatically inject the necessary shared parameters directly into your project and bind them to the native **Rooms** category (`OST_Rooms`).
+3. Finding the required fields unlinked, it will automatically inject the necessary shared parameters directly into your project and bind them to the native `Rooms` category.
 4. Upon successful generation, a dialogue pop-up window will notify you that the parameter injection and binding succeeded. 
 5. Close the pop-up, and your calculator dashboard will open. On all future clicks, the tool will bypass this setup sequence seamlessly.
 
@@ -62,10 +62,9 @@ There is no need to manually set up or link a Shared Parameters text file. The t
 
 To display the project grand totals dynamically on your code documentation sheets, you must leverage a single parameterized block family.
 
-1. Open your project model, navigate to **Insert > Load Family**, and open the prebuilt family template located at:
-   `[GENERIC ANNOTATION FILEPATH]`
+1. Download the prebuilt family from this repo. Open your project model, navigate to `Insert > Load Family` and point it to the family you just downloaded.
 2. Place an instance of this `Plumb_GrandTotals_Table` annotation family directly onto your targeted code sheet or drafting view.
-3. Select the family instance, look at the Properties Palette, and locate the **GT_Level_Target** text field.
+3. Select the family instance, look at the Properties Palette, and locate the `GT_Level_Target` text field.
 4. Type the exact case-sensitive name of the level you wish to report (e.g., `Level 1`). 
 
 ![Shared Parameter Project Category Binding Options](docs/images/generic_annotation.png)
@@ -78,21 +77,21 @@ The calculator is now completely installed and configured!
 
 Because the extension is linked directly to GitHub via pyRevit, applying future updates is effortless. Whenever a new version or bug fix is pushed to this repository:
 
-1. Open the **pyRevit Extension Manager**.
+1. Open the `pyRevit Extension Manager`.
 2. Locate the Plumbing Calculator in your installed list.
-3. Click **Update**. pyRevit will automatically pull the latest source code from GitHub and apply the changes. 
+3. Click `Update`. pyRevit will automatically pull the latest source code from GitHub and apply the changes. 
 4. Reload pyRevit to see the updates take effect.
 
 ---
 
 ## How To Use
 
-1. Click the **Plumbing Calc** button on your ribbon panel to launch the modeless dashboard.
-2. Use the top filters to isolate your target **Phase** and **Level**. The tool automatically identifies the newest chronological phase by default.
-3. For each room line-item, assign its **Occupancy Type** using the alphabetized selector drop-down. The script instantly snaps to default load factors or provides a symbol indicator (`-`) if seat-count overrides apply.
-4. If needed, select multiple rooms simultaneously and utilize the **Bulk Editor** pane to change types or check **Exclude Room** recursively.
-5. Expand the **View Math Breakdown** panel at the base to evaluate the raw aggregated code math formatting.
-6. Click **Calculate & Push Data to Revit**. This automatically writes parameter values to individual rooms, targets your schedule block instance via `GT_Level_Target`, and updates the sheet schedule integers instantly.
+1. Click the `Plumbing Calc` button on your ribbon panel to launch the modeless dashboard.
+2. Use the top filters to isolate your target `Phase` and `Level`. The tool automatically identifies the newest chronological phase by default.
+3. For each room line-item, assign its `Occupancy Type` using the alphabetized selector drop-down. The script instantly snaps to default load factors or provides a symbol indicator (`-`) if seat-count overrides apply.
+4. If needed, select multiple rooms simultaneously and utilize the `Bulk Editor` pane to change types or check `Exclude Room` recursively.
+5. Expand the `View Math Breakdown` panel at the base to evaluate the raw aggregated code math formatting.
+6. Click `Calculate & Push Data to Revit`. This automatically writes parameter values to individual rooms, targets your schedule block instance via `GT_Level_Target`, and updates the sheet schedule integers instantly.
 
 > Note if the table isn't placed or if the Level name isn't filled out or doesn't match any level names, you will see an error message. This can be safely ignored if you don't need the table.
 
@@ -103,12 +102,12 @@ Because the extension is linked directly to GitHub via pyRevit, applying future 
 ## Manual Parameter Binding Appendix
 
 Use these instructions only if the automated parameter registration loop fails:
-1. Go to the **Manage** tab on the ribbon and click **Project Parameters**.
-2. Click **Add**, select **Shared Parameter**, and click **Select**.
-3. Choose the `PlumbingCalc` group, pick your first parameter, and configure it as an **Instance** parameter.
-4. Set **Group parameter under** to *Data* or *Plumbing*.
-5. Check **Values can vary by group instance**.
-6. In the right-hand Categories list, check **Rooms** and click **OK**.
+1. Go to the `Manage` tab on the ribbon and click `Project Parameters`.
+2. Click `Add`, select `Shared Parameter`, and click `Select`.
+3. Choose the `PlumbingCalc` group, pick your first parameter, and configure it as an `Instance` parameter.
+4. Set `Group parameter under` to *Data* or *Plumbing*.
+5. Check `Values can vary by group instance`.
+6. In the right-hand Categories list, check `Rooms` and click `OK`.
 7. Repeat this exact sequence for all parameters in the file.
 
 [Back to Setup Workflow](#installation--setup-workflow)
