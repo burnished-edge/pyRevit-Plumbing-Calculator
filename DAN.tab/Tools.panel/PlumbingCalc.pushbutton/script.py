@@ -32,7 +32,7 @@ def setup_plumbing_parameters():
         "Plumb_LoadFactor": DB.SpecTypeId.Number if hasattr(DB.SpecTypeId, 'Number') else DB.ParameterType.Number,
         "Plumb_SeatCount": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
         "Plumb_UnitCount": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
-        "GT_Level_Target": DB.SpecTypeId.Int.String.Text if hasattr(DB.SpecTypeId, 'String') else DB.ParameterType.Text,
+        "GT_Level_Target": DB.SpecTypeId.String.Text if hasattr(DB.SpecTypeId, 'String') else DB.ParameterType.Text,
         "GT_Req_MWC": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
         "GT_Req_FWC": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
         "GT_Req_MUr": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
