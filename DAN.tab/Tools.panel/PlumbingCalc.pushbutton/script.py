@@ -31,7 +31,17 @@ def setup_plumbing_parameters():
         "Plumb_OccupancyType": DB.SpecTypeId.String.Text if hasattr(DB.SpecTypeId, 'String') else DB.ParameterType.Text,
         "Plumb_LoadFactor": DB.SpecTypeId.Number if hasattr(DB.SpecTypeId, 'Number') else DB.ParameterType.Number,
         "Plumb_SeatCount": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
-        "Plumb_UnitCount": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer
+        "Plumb_UnitCount": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Level_Target": DB.SpecTypeId.Int.String.Text if hasattr(DB.SpecTypeId, 'String') else DB.ParameterType.Text,
+        "GT_Req_MWC": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_FWC": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_MUr": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_FLav": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_MLav": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_AllGenderWC": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_AllGenderLav": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_GT_DesignLoad": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer,
+        "GT_Req_DF": DB.SpecTypeId.Int.Integer if hasattr(DB.SpecTypeId, 'Int') else DB.ParameterType.Integer
     }
     
     # Target Category: Rooms
