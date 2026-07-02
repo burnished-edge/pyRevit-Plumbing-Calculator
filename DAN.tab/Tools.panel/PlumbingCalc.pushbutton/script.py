@@ -573,7 +573,7 @@ class PlumbingCalcWindow(forms.WPFWindow):
 # ==========================================
 # 5. SCRIPT EXECUTION
 # ==========================================
-auto_bind_plumbing_parameters()
+setup_plumbing_parameters()
 
 window = PlumbingCalcWindow('PlumbingCalc_ui.xaml')
 window.ShowDialog()
